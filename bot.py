@@ -4,6 +4,10 @@ import psutil as p
 import os
 from discord.ext import commands
 from discord.ext.commands import bot
+import sys
+import shutil
+import subprocess
+import re
 
 
 def size(byte):
@@ -33,13 +37,8 @@ usedram = "Used Memory:     ", size(mem.used), "percentual", mem.percent,"%"
 async def on_ready():
     print("Bot is ready")
 
-
 @client.command()
 async def cpu(ctx):
-    await ctx.send('I have ' + info)
-
-@client.command()
-async def cpustats(ctx):
     await ctx.send(core)
     await ctx.send(maxfrequency)
     await ctx.send(minfreq)
@@ -57,5 +56,32 @@ async def disk(ctx):
     await ctx.send(allram)
     await ctx.send(availableram)
     await ctx.send(usedram)
+
+@client.command()
+async def hw(ctx):
+    if cpuinfo.get_cpu_info()['vendor_id_raw'] == 'GenuineIntel':
+        result = subprocess.run(["./gpu.sh"], stdout=subprocess.PIPE)
+        disk = subprocess.run(["./disk.sh"], stdout=subprocess.PIPE)
+        name = subprocess.run(["cat" ,"/proc/sys/kernel/hostname"], stdout=subprocess.PIPE)
+        embed=discord.Embed(title=name.stdout, description="Here the specs of the pc")
+        embed.set_author(name=name.stdout, icon_url="https://pbs.twimg.com/profile_images/1301470406545637376/ti9zFC98_400x400.png")
+        embed.set_thumbnail(url="https://pbs.twimg.com/profile_images/1301470406545637376/ti9zFC98_400x400.png")
+        embed.add_field(name="Cpu", value=info, inline=False)
+        embed.add_field(name="Ram", value=allram, inline=True)
+        embed.add_field(name="Disk", value=disk.stdout, inline=True)
+        embed.add_field(name="Gpu", value=result.stdout, inline=True)
+        await ctx.send(embed=embed)
+    else:
+        result = subprocess.run(["./gpu.sh"], stdout=subprocess.PIPE)
+        disk = subprocess.run(["./disk.sh"], stdout=subprocess.PIPE)
+        name = subprocess.run(["cat" ,"/proc/sys/kernel/hostname"], stdout=subprocess.PIPE)
+        embed=discord.Embed(title=name.stdout, description="Here the specs of the pc")
+        embed.set_author(name=name.stdout, icon_url="https://www.amd.com/system/files/2020-06/amd-default-social-image-1200x628.jpg")
+        embed.set_thumbnail(url="https://www.amd.com/system/files/2020-06/amd-default-social-image-1200x628.jpg")
+        embed.add_field(name="Cpu", value=info, inline=False)
+        embed.add_field(name="Ram", value=allram, inline=True)
+        embed.add_field(name="Disk", value=disk.stdout, inline=True)
+        embed.add_field(name="Gpu", value=result.stdout, inline=True)
+        await ctx.send(embed=embed)
 
 client.run('TOKEN')
